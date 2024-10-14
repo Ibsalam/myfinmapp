@@ -1,6 +1,5 @@
 .navbar {
     position: sticky;
-    width: 100%;
     left: 0;
     top: 0;
     padding: 1rem 1.5rem;
@@ -17,6 +16,16 @@
     margin: 0;
   }
   
+  .link {
+    opacity: 0.8;
+    cursor: pointer;
+  }
+
+  .link:hover {
+    opacity: 1;
+    transition: all 0.3s;
+  }
+
   .navbar-heading {
     color: #fff;
     font-weight: 500;
@@ -35,4 +44,3 @@
     color: #fff;
     transition: all 0.3s;
   }
-  
