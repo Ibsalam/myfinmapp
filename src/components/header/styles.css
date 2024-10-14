@@ -1,3 +1,38 @@
 .navbar {
-    background-color: blue;
-}
+    position: sticky;
+    width: 100%;
+    left: 0;
+    top: 0;
+    padding: 1rem 1.5rem;
+    background-color: var(--theme);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .logo {
+    color: var(--white);
+    font-weight: 500;
+    font-size: 1.2rem;
+    margin: 0;
+  }
+  
+  .navbar-heading {
+    color: #fff;
+    font-weight: 500;
+    margin: 0px;
+    font-size: 1.2rem;
+  }
+  .navbar-link {
+    color: #e3e3e3;
+    font-weight: 500;
+    margin: 0px;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  
+  .navbar-link:hover {
+    color: #fff;
+    transition: all 0.3s;
+  }
+  
