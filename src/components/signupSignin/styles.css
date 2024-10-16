@@ -1,9 +1,22 @@
 .signup-wrapper {
-    width: 70%;
-    max-width: 600px;
+    width: 60%;
+    max-width: 300px;
     height: auto;
     box-shadow: var(--shadow);
     border-radius: 1rem;
-    padding: 1rem;
-    background-color: lightgray;
+    padding: 1rem 1.5rem;
+    background-color: rgb(245, 250, 255);
+}
+
+.title {
+    font-weight: 500;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.p-login {
+    text-align: center;
+    font-weight: 250;
+    font-size: 0.8rem;
+    margin: 0;
 }
