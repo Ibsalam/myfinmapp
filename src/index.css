@@ -40,3 +40,16 @@ input {
   opacity: 1;
   transition: all 0.3s;
 }
+
+.custom-input, input {
+  width: 100%; /* Ensure the input takes full width but within the container */
+  padding: 0.5rem; /* Add padding to input field */
+  margin-top: 0.5rem; /* Space between label and input */
+  border: 1px solid #ccc;
+  border-radius: 0.25rem;
+  box-sizing: border-box; /* Ensure padding is included in the total width */
+}
+
+.form-item {
+  margin-bottom: 1.5rem; /* Ensure spacing between form fields */
+}

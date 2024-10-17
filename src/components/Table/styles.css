@@ -1,0 +1,31 @@
+.table-container {
+    margin: 20px 0;
+    width: 100%;
+  }
+  
+  .income-text {
+    color: #4CAF50; /* Green color for income */
+    font-weight: bold;
+  }
+  
+  .expense-text {
+    color: #F44336; /* Red color for expenses */
+    font-weight: bold;
+  }
+  
+  .ant-table-thead > tr > th {
+    background-color: #f0f2f5;
+    font-weight: bold;
+    text-align: center;
+  }
+  
+  .ant-table-tbody > tr > td {
+    text-align: center;
+  }
+  
+  .ant-table-pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+  }
+  

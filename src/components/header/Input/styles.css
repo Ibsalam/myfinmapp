@@ -4,8 +4,9 @@
 
 .label-input {
     text-transform: capitalize;
-    margin-bottom: 0rem;
+    margin-bottom: 0.5rem;
     font-size: 0.8rem;
+    display: block;
 }
 
 .custom-input {
@@ -22,6 +23,19 @@
     transition: all 0.2s;
 }
 
+.custom-input, input {
+    width: 100%; /* Ensure the input takes full width but within the container */
+    padding: 0.5rem; /* Add padding to input field */
+    margin-top: 0.5rem; /* Space between label and input */
+    border: 1px solid #ccc;
+    border-radius: 0.25rem;
+    box-sizing: border-box; /* Ensure padding is included in the total width */
+}
+
 .custom-input::placeholder {
     color: grey
+}
+
+.form-item {
+    margin-bottom: 1.5rem; /* Ensure spacing between form fields */
 }

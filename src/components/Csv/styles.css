@@ -1,0 +1,11 @@
+.csv-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 20px 0;
+  }
+  
+  .export-btn {
+    margin-left: 10px;
+  }
+  

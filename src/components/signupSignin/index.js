@@ -185,7 +185,7 @@ function SignupSigninComponent() {
                     <h2 className="title">
                         Sign Up to <span style={{ color: "var(--theme)" }}>MyfinmAPP</span>
                     </h2>
-                    <form>
+                    <form className="form-item">
                         <Input
                             label="Full Name"
                             state={name}
