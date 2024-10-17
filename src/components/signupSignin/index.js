@@ -73,7 +73,7 @@ function SignupSigninComponent() {
                 setLoading(false);
             } else {
                 console.log("Document already exists for user:", user.uid);
-                toast.error("Doc already exists!");
+                // toast.error("Doc already exists!");
                 setLoading(false);
             }
         } catch (e) {
