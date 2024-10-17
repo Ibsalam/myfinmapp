@@ -6,99 +6,153 @@ import TransactionsTable from "../components/Table";
 import AddExpenseModal from "../components/Modals/AddExpenses";
 import AddIncomeModal from "../components/Modals/AddIncome";
 import AddBudgetModal from "../components/Modals/AddBudget";
-import { addDoc, collection, getDocs, query, doc, getDoc } from "firebase/firestore"; // Added missing doc and getDoc imports
+import { addDoc, collection, getDocs, query, doc, onSnapshot, updateDoc, arrayUnion, getDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
 import { useAuthState } from "react-firebase-hooks/auth";
-import moment from "moment";
-import { db, auth } from "../firebase"; // Ensure both db and auth are imported
+import { db, auth } from "../firebase";
+import Chart from "../components/Charts";
+import './Dashboard.css';  // Importing custom CSS
 
 function Dashboard() {
-  const [transactions, setTransactions] = useState([]); // Corrected transactions state to store actual fetched transactions
-  const [loading, setLoading] = useState(false); // State to manage loading state during fetching
-  const [user] = useAuthState(auth); // Using Firebase auth hook to get the logged-in user
-  const [isExpenseModalVisible, setIsExpenseModalVisible] = useState(false); // Modal state management for Expense
-  const [isIncomeModalVisible, setIsIncomeModalVisible] = useState(false); // Modal state management for Income
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [user] = useAuthState(auth);
+
+  const [isExpenseModalVisible, setIsExpenseModalVisible] = useState(false);
+  const [isIncomeModalVisible, setIsIncomeModalVisible] = useState(false);
   const [isBudgetModalVisible, setIsBudgetModalVisible] = useState(false);
+
   const [budget, setBudget] = useState(0);
   const [income, setIncome] = useState(0);
   const [expense, setExpense] = useState(0);
   const [totalBalance, setTotalBalance] = useState(0);
 
-  // Show modal handlers
   const showExpenseModal = () => setIsExpenseModalVisible(true);
   const showIncomeModal = () => setIsIncomeModalVisible(true);
-  const showBudgetModal = () => setIsBudgetModalVisible(true); // Corrected budget modal function
-
-  // Hide modal handlers
+  const showBudgetModal = () => setIsBudgetModalVisible(true);
   const handleExpenseCancel = () => setIsExpenseModalVisible(false);
   const handleIncomeCancel = () => setIsIncomeModalVisible(false);
   const handleBudgetCancel = () => setIsBudgetModalVisible(false);
 
-  // Handling form submission for both Income and Expense
-  const onFinish = (values, type) => {
-    const newTransaction = {
-      type: type,
-      date: values.date.format("YYYY-MM-DD"), // Corrected date format
-      amount: parseFloat(values.amount),
-      tag: values.tag,
-      name: values.name,
-    };
-    addTransaction(newTransaction); // Call to add the transaction to Firestore
-  };
+  const handleAddBudget = async (values) => {
+    const { category, amount, date } = values;
 
-  const handleAddBudget = (values) => {
-    setBudget(values.amount);
-    handleBudgetCancel();
-  };
-
-  // Function to add a transaction to Firestore
-  async function addTransaction(transaction) {
-    try {
-      const docRef = await addDoc(
-        collection(db, `users/${user.uid}/transactions`),
-        transaction
-      );
-      console.log("Document written with ID: ", docRef.id);
-      toast.success("Transaction Added!");
-      setTransactions((prev) => [...prev, transaction]); // Update transactions state
-      balanceCalc();
-    } catch (e) {
-      console.error("Error adding transaction! ", e);
-      toast.error("Couldn't add Transaction");
+    if (!user) {
+      toast.error("You need to be logged in to add a budget");
+      return;
     }
-  }
 
-  // Fetch transactions when the component mounts
+    const parsedAmount = parseFloat(amount);
+    if (isNaN(parsedAmount)) {
+      toast.error("Invalid budget amount");
+      return;
+    }
+
+    try {
+      const userRef = doc(db, "users", user.uid); // Reference to the user's document
+
+      // Update user's document with new budget
+      await updateDoc(userRef, {
+        budgets: arrayUnion({
+          category,
+          amount: parsedAmount,
+          date: date.format("YYYY-MM-DD"),
+          createdAt: new Date(),
+        }),
+      });
+
+      toast.success("Budget added successfully!");
+      setBudget(prevBudget => prevBudget + parsedAmount);
+      handleBudgetCancel(); // Close the modal
+    } catch (error) {
+      console.error("Error adding budget:", error);
+      toast.error("Failed to add budget");
+    }
+  };
+
+  const onFinish = async (values, type) => {
+    try {
+      const transactionData = {
+        amount: parseFloat(values.amount),
+        description: values.description || "",
+        type: type,
+        date: new Date().toISOString(),
+      };
+
+      // Add to transactions collection
+      await addDoc(collection(db, `users/${user.uid}/transactions`), transactionData);
+
+      if (type === "income") {
+        setIncome(prevIncome => prevIncome + transactionData.amount);
+      } else if (type === "expense") {
+        setExpense(prevExpense => prevExpense + transactionData.amount);
+      }
+
+      toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} added successfully!`);
+      if (type === "income") {
+        handleIncomeCancel();
+      } else if (type === "expense") {
+        handleExpenseCancel();
+      }
+    } catch (error) {
+      console.error(`Error adding ${type}:`, error);
+      toast.error(`Couldn't add ${type}`);
+    }
+  };
+
   useEffect(() => {
     if (user) {
-      fetchTransactions(); // Fetch the user's transactions from Firestore
+      fetchTransactions();  // Fetch transactions when the user is logged in
+      fetchBudget(); // Fetch budget on user change
     }
   }, [user]);
 
-  useEffect(() => {
-    if (user) {
-      balanceCalc();
-    }
-  }, [transactions]);
+  const fetchTransactions = async () => {
+    setLoading(true);
+    try {
+      const q = query(collection(db, `users/${user.uid}/transactions`));
+      const querySnapshot = await getDocs(q);
+      const transactionsArray = [];
+      querySnapshot.forEach((doc) => {
+        transactionsArray.push(doc.data());
+      });
 
-  useEffect(() => {
-    if (expense >= budget) {
-      toast.warn("You have reached your budget limit!");
-    } else if (expense > budget) {
-      toast.error("You have exceeded your budget!");
+      setTransactions(transactionsArray);  // Save transactions into state
+      balanceCalc(transactionsArray);      // Calculate balance after fetching transactions
+      toast.success("Transactions Fetched!");
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+      toast.error("Couldn't fetch transactions");
     }
-  }, [expense, budget]);
+    setLoading(false);
+  };
 
-  // Calculate total balance, income, and expenses
-  const balanceCalc = () => {
+  const fetchBudget = async () => {
+    try {
+      const userRef = doc(db, "users", user.uid);
+      const userDoc = await getDoc(userRef);
+
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        const totalBudget = data?.budgets?.reduce((acc, curr) => acc + curr.amount, 0) || 0;
+        setBudget(totalBudget);
+      }
+    } catch (error) {
+      console.error("Error fetching budget:", error);
+      toast.error("Couldn't fetch budget");
+    }
+  };
+
+  const balanceCalc = (transactionsArray) => {
     let incomeTotal = 0;
     let expensesTotal = 0;
 
-    transactions.forEach((transaction) => {
+    transactionsArray.forEach((transaction) => {
+      const amount = parseFloat(transaction.amount);
       if (transaction.type === "income") {
-        incomeTotal += transaction.amount;
-      } else {
-        expensesTotal += transaction.amount;
+        incomeTotal += amount;
+      } else if (transaction.type === "expense") {
+        expensesTotal += amount;
       }
     });
 
@@ -107,30 +161,11 @@ function Dashboard() {
     setTotalBalance(incomeTotal - expensesTotal);
   };
 
-  // Function to fetch transactions from Firestore
-  async function fetchTransactions() {
-    setLoading(true); // Start loading indicator
-    try {
-      const q = query(collection(db, `users/${user.uid}/transactions`));
-      const querySnapshot = await getDocs(q);
-      const transactionsArray = [];
-      querySnapshot.forEach((doc) => {
-        transactionsArray.push(doc.data());
-      });
-      setTransactions(transactionsArray); // Set fetched transactions to state
-      toast.success("Transactions Fetched!");
-    } catch (error) {
-      console.error("Error fetching transactions: ", error);
-      toast.error("Couldn't fetch transactions");
-    }
-    setLoading(false); // Stop loading indicator
-  }
-
   return (
     <div>
       <Header />
       {loading ? (
-        <p>Loading...</p> // Show loading message while fetching data
+        <p>Loading...</p>
       ) : (
         <>
           <Cards
@@ -138,24 +173,32 @@ function Dashboard() {
             expense={expense}
             totalBalance={totalBalance}
             budget={budget}
-            showExpenseModal={showExpenseModal} // Passing modal handlers to Cards component
+            showExpenseModal={showExpenseModal}
             showIncomeModal={showIncomeModal}
             showBudgetModal={showBudgetModal}
           />
+          
+          {transactions.length === 0 && (
+            <div className="no-transactions">
+              <p>No transactions to display</p>
+            </div>
+          )}
+
+          <Chart income={income} expense={expense} />
           <TransactionsTable transactions={transactions} />
           <CsvComponent transactions={transactions} />
           <AddExpenseModal
-            isExpenseModalVisible={isExpenseModalVisible} // Expense modal visibility control
+            isExpenseModalVisible={isExpenseModalVisible}
             handleExpenseCancel={handleExpenseCancel}
-            onFinish={onFinish}
+            onFinish={(values) => onFinish(values, "expense")}
           />
           <AddIncomeModal
-            isIncomeModalVisible={isIncomeModalVisible} // Income modal visibility control
+            isIncomeModalVisible={isIncomeModalVisible}
             handleIncomeCancel={handleIncomeCancel}
-            onFinish={onFinish}
+            onFinish={(values) => onFinish(values, "income")}
           />
           <AddBudgetModal
-            isBudgetModalVisible={isBudgetModalVisible} // Budget modal visibility control
+            isBudgetModalVisible={isBudgetModalVisible}
             handleBudgetCancel={handleBudgetCancel}
             onFinish={handleAddBudget}
           />

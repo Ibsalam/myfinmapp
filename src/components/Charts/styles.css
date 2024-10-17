@@ -1,0 +1,7 @@
+/* src/components/Charts/styles.css */
+.chart-container {
+    width: 100%;
+    max-width: 600px;
+    margin: 20px auto;
+  }
+  

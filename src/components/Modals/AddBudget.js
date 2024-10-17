@@ -35,13 +35,13 @@ function AddBudgetModal({ isBudgetModalVisible, handleBudgetCancel, onFinish }) 
       });
 
       toast.success("Budget added successfully!");
-      setLoading(false);
       form.resetFields(); // Reset the form fields
       handleBudgetCancel(); // Close the modal
     } catch (error) {
       console.error("Error adding budget:", error);
       toast.error("Failed to add budget");
-      setLoading(false);
+    } finally {
+        setLoading(false);
     }
   };
 
@@ -54,10 +54,11 @@ function AddBudgetModal({ isBudgetModalVisible, handleBudgetCancel, onFinish }) 
       footer={null}
     >
       <Form
+        form
         form={form}
         layout="vertical"
-        onFinish={handleSubmit} // Call the new handleSubmit function
-      >
+        onFinish={handleSubmit}
+        >
         <Form.Item
           style={{ fontWeight: 600 }}
           label="Category"
